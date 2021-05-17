@@ -181,12 +181,22 @@ pre code {
 <p>Oregon – 2015</p>
 <p>Alaska – 2015</p>
 <p>Nevada - 2017</p>
-<ol style="list-style-type: lower-alpha">
-<li><p>Create a dummy variable that indicates whether recreational variable is available within a state. Now run a regression with log(murder_pop) on the left. On the right hand side, control for state fixed effects, year fixed effects, and the recreational marijuana dummy. What is it’s coefficient, and upper and lower bounds. Does marijuana contribute to reefer madness as suggested by Alex Berenson in his recent book?</p></li>
-<li><p>Now I want you to collapse your data to 3 regions. Colorado, Washington, and the rest of the country. Create a connected line plot with murder on the y-axis and year on the x- axis. Create a vertical line marking 2014. Broadly happens to average murder rates in Colorado and Washington, the first legalizers? What happens in the rest of the country? Do the trends in the Colorado and Washington match those in the rest of the country?</p></li>
-<li><p>Now use the state by year data again. Drop California, Oregon, Nevada, and Alaska (they legalized early, but not enough for post treatment data). Use a synthetic control approach to estimate the effect of marijuana legalization for both Colorado, and Washington. Match on the lagged murder rate per 100,000 for each year 2000, 2001, 2002, etc. through 2013. How does the murder rate in Colorado and Washington compare to its synthetic control average for 2014-2017?</p></li>
-<li><p>Use randomization inference to conduct hypothesis testing. To do so, reestimate the synthetic control approach for each state not treated excluding the two treatment states (and the other later adopting states). Estimate the mean squared error (MSE) for the placebo states, and for the treated states, both both and after recreational marijuana legalization. Now generate a ratio of postMSE/preMSE. How does CO and Washington compare to the distribution. This is your empirical p-value. Can you reject the <span class="math inline">\(H_0\)</span> that marijuana legalization did not increase crime? Why or why not?</p></li>
-</ol>
+<div id="a." class="section level3">
+<h3>A.</h3>
+<p>Create a dummy variable that indicates whether recreational variable is available within a state. Now run a regression with log(murder_pop) on the left. On the right hand side, control for state fixed effects, year fixed effects, and the recreational marijuana dummy. What is it’s coefficient, and upper and lower bounds. Does marijuana contribute to reefer madness as suggested by Alex Berenson in his recent book?</p>
+</div>
+<div id="b." class="section level3">
+<h3>B.</h3>
+<p>Now I want you to collapse your data to 3 regions. Colorado, Washington, and the rest of the country. Create a connected line plot with murder on the y-axis and year on the x- axis. Create a vertical line marking 2014. Broadly happens to average murder rates in Colorado and Washington, the first legalizers? What happens in the rest of the country? Do the trends in the Colorado and Washington match those in the rest of the country?</p>
+</div>
+<div id="c." class="section level3">
+<h3>C.</h3>
+<p>Now use the state by year data again. Drop California, Oregon, Nevada, and Alaska (they legalized early, but not enough for post treatment data). Use a synthetic control approach to estimate the effect of marijuana legalization for both Colorado, and Washington. Match on the lagged murder rate per 100,000 for each year 2000, 2001, 2002, etc. through 2013. How does the murder rate in Colorado and Washington compare to its synthetic control average for 2014-2017?</p>
+</div>
+<div id="d." class="section level3">
+<h3>D.</h3>
+<p>Use randomization inference to conduct hypothesis testing. To do so, reestimate the synthetic control approach for each state not treated excluding the two treatment states (and the other later adopting states). Estimate the mean squared error (MSE) for the placebo states, and for the treated states, both both and after recreational marijuana legalization. Now generate a ratio of postMSE/preMSE. How does CO and Washington compare to the distribution. This is your empirical p-value. Can you reject the <span class="math inline">\(H_0\)</span> that marijuana legalization did not increase crime? Why or why not?</p>
+</div>
 </div>
 <div id="quantile-regressions" class="section level2">
 <h2>2. Quantile Regressions</h2>
