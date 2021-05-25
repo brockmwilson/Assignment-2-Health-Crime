@@ -84,7 +84,12 @@ state_pop_murder %>%
 ggplot(data = state_pop_murder, aes(x = year, y = murder_pop, color = state)) +
   geom_line()
 
-# Alabama is most likely misreporting its murder rate: there is a huge discontinuous drop in the rate
+# State 1 (Alabama) is most likely misreporting its murder rate: there is a huge discontinuous drop in the rate
+
+state_pop_murder = data.table(state_pop_murder)
+
+state_pop_murder_final = state_pop_murder[!(state_fips %in% c(1, 11, 12)), ]
+
 
 ```
 
