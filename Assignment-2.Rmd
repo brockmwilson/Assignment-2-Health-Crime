@@ -38,21 +38,53 @@ shr_final = shr[shr$additional_victim_count <= 2,]
 
 # Aggregate up to FIPS state code
 
-shr_final[, .N, by = c("fips_state_code", "year")]
+#shr_final[, .N, by = c("fips_state_code", "year")]
 
 # DPLYR Version
 
 shr_final = tibble(shr_final)
 
-shr_final %>%
+murder_rates = shr_final %>%
   group_by(fips_state_code, year) %>%
-  summarise(additional_victim_count = sum(additional_victim_count))
+  summarise(victim_count = sum(additional_victim_count) + n())
+
+colnames(murder_rates)[1] = "state_fips"
+
+# Loading State Pop
+
+state_pop = read.csv("statepop.csv")
+
+colnames(state_pop)[6] = "state_fips"
+
+# Merge data
+
+state_pop_murder = state_pop %>%
+  left_join(murder_rates, by = c("state_fips", "year"))
+
+state_pop_murder$murder_pop = state_pop_murder$victim_count/(state_pop_murder$pop/100000)
+
+# Inspecting for NAs/Underreporting
+
+state_pop_murder %>%
+  group_by(state_fips) %>%
+  summarise(sumNA = sum(is.na(murder_pop))) %>%
+  arrange(-sumNA)
+
+# We have 2000-2020 data; this suggests that State 12 is missing all of its data (Hawaii)
+
+# State 8 (Delaware) is missing a significant amount of data
+
+state_pop_murder %>%
+  group_by(state_fips) %>%
+  summarise(meanMurder = mean(murder_pop, na.rm = TRUE)) %>%
+  arrange(-meanMurder)
+
 
 ```
 
 ### A. 
 
-Create a dummy variable that indicates whether recreational variable is available within a state. Now run a regression with log(murder_pop) on the left. On the right hand side, control for state fixed effects, year fixed effects, and the recreational marijuana dummy. What is it’s coefficient, and upper and lower bounds. Does marijuana contribute to reefer madness as suggested by Alex Berenson in his recent book?
+Create a dummy variable that indicates whether recreational variable is available within a state. Now run a regression with log(murder_pop) on the left. On the right hand side, control for state fixed effects, year fixed effects, and the recreational marijuana dummy. What is the coefficient, and upper and lower bounds. Does marijuana contribute to reefer madness as suggested by Alex Berenson in his recent book?
 
 ### B. 
 
