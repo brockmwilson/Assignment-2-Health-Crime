@@ -8,7 +8,7 @@ output: html_document
 ```{R}
 library(pacman)
 
-p_load(data.table, dtplyr, dplyr)
+p_load(data.table, dtplyr, dplyr, ggplot2)
 ```
 
 ## 1. How does recreational marijuana legalization affect crime.
@@ -70,15 +70,21 @@ state_pop_murder %>%
   summarise(sumNA = sum(is.na(murder_pop))) %>%
   arrange(-sumNA)
 
-# We have 2000-2020 data; this suggests that State 12 is missing all of its data (Hawaii)
+# We have 2000-2020 data; this suggests that State 12 is missing all of its data (Florida)
 
-# State 8 (Delaware) is missing a significant amount of data
+# State 11 (D.C.) is missing a significant amount of data
 
 state_pop_murder %>%
   group_by(state_fips) %>%
   summarise(meanMurder = mean(murder_pop, na.rm = TRUE)) %>%
   arrange(-meanMurder)
 
+# Need to find one more state
+
+ggplot(data = state_pop_murder, aes(x = year, y = murder_pop, color = state)) +
+  geom_line()
+
+# Alabama is most likely misreporting its murder rate: there is a huge discontinuous drop in the rate
 
 ```
 
