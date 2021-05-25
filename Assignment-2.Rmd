@@ -89,21 +89,51 @@ ggplot(data = state_pop_murder, aes(x = year, y = murder_pop, color = state)) +
 state_pop_murder = data.table(state_pop_murder)
 
 state_pop_murder_final = state_pop_murder[!(state_fips %in% c(1, 11, 12)), ]
-
-
 ```
 
 ### A. 
 
 Create a dummy variable that indicates whether recreational variable is available within a state. Now run a regression with log(murder_pop) on the left. On the right hand side, control for state fixed effects, year fixed effects, and the recreational marijuana dummy. What is the coefficient, and upper and lower bounds. Does marijuana contribute to reefer madness as suggested by Alex Berenson in his recent book?
 
+```{R}
+
+```
+
 ### B. 
 
 Now I want you to collapse your data to 3 regions. Colorado, Washington, and the rest of the country. Create a connected line plot with murder on the y-axis and year on the x- axis. Create a vertical line marking 2014. Broadly happens to average murder rates in Colorado and Washington, the first legalizers? What happens in the rest of the country? Do the trends in the Colorado and Washington match those in the rest of the country?
 
+```{R}
+
+```
+
 ### C. 
 
 Now use the state by year data again. Drop California, Oregon, Nevada, and Alaska (they legalized early, but not enough for post treatment data). Use a synthetic control approach to estimate the effect of marijuana legalization for both Colorado, and Washington. Match on the lagged murder rate per 100,000 for each year 2000, 2001, 2002, etc. through 2013. How does the murder rate in Colorado and Washington compare to its synthetic control average for 2014-2017?
+
+```{R}
+# Great paper on syn control: https://economics.mit.edu/files/17847
+# Using Synthetic Controls: Feasibility, Data Requirements, and Methodological Aspects
+
+# Dropping Cali, Oregon, Nevada, Alaska
+
+state_pop_murder_synthetic = tibble(state_pop_murder_final) %>%
+  filter(!(state_fips %in% c(6, 41, 32, 2)))
+
+# Create a synthetic Colorado and Washington (matching on lagged murder rates)
+
+# Need to create weights, w
+
+# Min pre treatment murder rate
+
+state_pop_murder_synthetic_2000_2013 = state_pop_murder_synthetic %%
+  filter()
+
+min(   )
+
+
+
+```
 
 ### D. 
 
