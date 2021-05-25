@@ -5,6 +5,12 @@ date: "5/17/2021"
 output: html_document
 ---
 
+```{R}
+library(pacman)
+
+p_load(data.table, dtplyr, dplyr)
+```
+
 ## 1. How does recreational marijuana legalization affect crime.
 
 Several states have legalized marijuana for recreational use. The goal in this study, is to estimate whether recreational marijuana legalization has increased violent crime, based on data from the supplemental homicides reports (SHR) (shr.csv file).
@@ -22,6 +28,27 @@ Oregon – 2015
 Alaska – 2015 
 
 Nevada - 2017
+
+```{R}
+shr = read.csv("/Users/Brock/Desktop/Second-Year-PhD/3rd-Quarter/Health-Economics/Assignment-2/shr.csv")
+
+shr = data.table(shr)
+
+shr_final = shr[shr$additional_victim_count <= 2,]
+
+# Aggregate up to FIPS state code
+
+shr_final[, .N, by = c("fips_state_code", "year")]
+
+# DPLYR Version
+
+shr_final = tibble(shr_final)
+
+shr_final %>%
+  group_by(fips_state_code, year) %>%
+  summarise(additional_victim_count = sum(additional_victim_count))
+
+```
 
 ### A. 
 
