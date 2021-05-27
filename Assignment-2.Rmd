@@ -8,7 +8,7 @@ output: html_document
 ```{R}
 library(pacman)
 
-p_load(data.table, dtplyr, dplyr, ggplot2, knitr, kableExtra)
+p_load(data.table, dtplyr, dplyr, ggplot2, knitr, kableExtra, fixest, modelsummary, broom)
 ```
 
 ## 1. How does recreational marijuana legalization affect crime.
@@ -36,7 +36,7 @@ shr = fread("data/shr.csv")
 state_pop = fread("data/statepop.csv")
 
 # Removing murders with more than 3 victims and those without FIPS codes
-shr_final = shr[shr$additional_victim_count <= 3 & !is.na(fips_state_code),]
+shr_final = shr[shr$additional_victim_count <= 2 & !is.na(fips_state_code),]
 
 # Aggregating murders to state, year level
 murder_rates = 
@@ -144,9 +144,36 @@ state_pop_murder_final = state_pop_murder[!(state_fips %in% c(1, 11, 12)), ]
 
 ### A. 
 
-Create a dummy variable that indicates whether recreational variable is available within a state. Now run a regression with log(murder_pop) on the left. On the right hand side, control for state fixed effects, year fixed effects, and the recreational marijuana dummy. What is the coefficient, and upper and lower bounds. Does marijuana contribute to reefer madness as suggested by Alex Berenson in his recent book?
+Create a dummy variable that indicates whether recreational marijuana is available within a state. Now run a regression with log(murder_pop) on the left. On the right hand side, control for state fixed effects, year fixed effects, and the recreational marijuana dummy. What is the coefficient, and upper and lower bounds. Does marijuana contribute to reefer madness as suggested by Alex Berenson in his recent book?
 
 ```{R}
+
+# Creating dummy variable for recreational marijuana
+state_pop_murder_final[,
+   mj_legal := ifelse(
+                   (year>=2015 & state == "OREGON") |
+                   (year>=2014 & state == "WASHINGTON")|
+                   (year>=2014 & state == "COLORADO")|
+                   (year>=2015 & state == "ALASKA") |
+                   (year>=2017 & state == "NEVADA"),
+                  1, 0)
+]
+
+# Regressions 
+reg1 = feols(
+  fml = log(murder_pop) ~ mj_legal | state_fips + year,
+  data = state_pop_murder_final
+)
+
+
+modelsummary(reg1)
+
+summary(reg1)
+
+# 95% confidence interval on coefficient 
+mj_coef_ub = reg1$coefficients[1] + 1.96*reg1$se[1]
+mj_coef_lb = reg1$coefficients[1] - 1.96*reg1$se[1]
+
 
 ```
 
