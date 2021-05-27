@@ -30,9 +30,7 @@ Alaska – 2015
 Nevada - 2017
 
 ```{R}
-shr = read.csv("/Users/Brock/Desktop/Second-Year-PhD/3rd-Quarter/Health-Economics/Assignment-2/shr.csv")
-
-shr = data.table(shr)
+shr = fread("data/shr.csv")
 
 shr_final = shr[shr$additional_victim_count <= 2,]
 
@@ -52,7 +50,7 @@ colnames(murder_rates)[1] = "state_fips"
 
 # Loading State Pop
 
-state_pop = read.csv("statepop.csv")
+state_pop = fread("statepop.csv")
 
 colnames(state_pop)[6] = "state_fips"
 
