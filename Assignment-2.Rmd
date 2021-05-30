@@ -148,7 +148,6 @@ Create a dummy variable that indicates whether recreational marijuana is availab
 
 #### SOLUTION
 
-
 ```{R}
 
 # Creating dummy variable for recreational marijuana
