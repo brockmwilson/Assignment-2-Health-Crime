@@ -520,7 +520,7 @@ co_pval = output[state_fips_treated == 8, rnk]/(nrow(output)-1)
 wa_pval = output[state_fips_treated == 53, rnk]/(nrow(output)-1)
 ```
 
-We fail to reject the null that marijuana did not increase crime with p values of `r co_pval` for Colorado and `r wa_pval` for Washington. This is because the ratio of PostMSE/PreMSE is low and that implies that crime did not spike post treatment. Altogether this suggests that marijuana legalization does not change murder rates.
+We fail to reject the null that marijuana did not increase crime with p values of `r co_pval` for Colorado and `r wa_pval` for Washington. This is because the ratio of PostMSE/PreMSE is low and that implies that crime did not spike post treatment. Altogether this suggests that marijuana legalization does not increase murder rates.
 
 ## 2. Quantile Regressions
 
@@ -532,7 +532,7 @@ Estimate QTE’s for every percentile from the 1 percentile to the 99th percenti
 
 #### SOLUTION
 
-No, the QTE's do not allow you to recover the distribution of individual treatment effects; they return the average treatment effect over the distribution of outcomes. The individual treatment effects are not recoverable since we must know the joint distribution of Y1 and Y0. In the histogram, we are able to recover each individual's treatment effect and then find the 1st and 99th percentile of effects. However when we estimate the QTE, there is an adhoc assumption on the joint distribution of Y1 and Y0 to calculate the outcomes.
+No, the QTE's do not allow you to recover the distribution of individual treatment effects; they return the average treatment effect over the distribution of outcomes. The individual treatment effects are not recoverable since we must know the joint distribution of Y1 and Y0. As we see in the histogram, we are able to recover each individual's treatment effect and then find the 1st and 99th percentile of effects. These individual treatment effects are significantly different compared to the Quantile Treatment Effects.
 
 ```{R}
 bltn = read.csv("data/Better_Late_Than_Never.csv")
