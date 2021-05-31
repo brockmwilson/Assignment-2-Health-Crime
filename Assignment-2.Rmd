@@ -148,6 +148,9 @@ Create a dummy variable that indicates whether recreational marijuana is availab
 
 #### SOLUTION
 
+The 95% confidence interval for the effect of recreational marijuana legalization on murder rate is (`r mj_coef_lb`,`r mj_coef_ub`). This indicates that legalization does not contribute to "reefer madness".
+
+
 ```{R}
 
 # Creating dummy variable for recreational marijuana
@@ -175,15 +178,14 @@ mj_coef_lb = round(reg1$coefficients[1] - 1.96*reg1$se[1], digits = 3)
 
 ```
 
-The 95% confidence interval for the effect of recreational marijuana legalization on murder rate is (`r mj_coef_lb`,`r mj_coef_ub`). This indicates that legalization does not contribute to "reefer madness".
-
 
 ### B. 
 
-Now I want you to collapse your data to 3 regions. Colorado, Washington, and the rest of the country. Create a connected line plot with murder on the y-axis and year on the x- axis. Create a vertical line marking 2014. Broadly happens to average murder rates in Colorado and Washington, the first legalizers? What happens in the rest of the country? Do the trends in the Colorado and Washington match those in the rest of the country?
+Now I want you to collapse your data to 3 regions. Colorado, Washington, and the rest of the country. Create a connected line plot with murder on the y-axis and year on the x- axis. Create a vertical line marking 2014. What broadly happens to average murder rates in Colorado and Washington, the first legalizers? What happens in the rest of the country? Do the trends in the Colorado and Washington match those in the rest of the country?
 
 #### SOLUTION
 
+The average murder rate in Colorado and Washington increases significantly in 2014 (Washington less so than Colorado). The rest of the country also has a large increase in the average murder rate in 2014. The trends in Colorado and Washington seem to follow the average murder rate closely, the only exception is that Colorado had a large spike in murders in 2004.
 
 ```{R}
 
@@ -216,6 +218,8 @@ ggplot(data = region_pop_murder, aes(x = year, y = avg_murder_pop)) +
 Now use the state by year data again. Drop California, Oregon, Nevada, and Alaska (they legalized early, but not enough for post treatment data). Use a synthetic control approach to estimate the effect of marijuana legalization for both Colorado, and Washington. Match on the lagged murder rate per 100,000 for each year 2000, 2001, 2002, etc. through 2013. How does the murder rate in Colorado and Washington compare to its synthetic control average for 2014-2017?
 
 #### SOLUTION
+
+For Colorado, the synthetic version suggests that there is a larger increase in murder rates that Colorado avoided. For Washington, 
 
 ```{R, eval = FALSE}
 # Great paper on syn control: https://economics.mit.edu/files/17847
@@ -298,9 +302,9 @@ Use randomization inference to conduct hypothesis testing. To do so, reestimate 
 
 #### SOLUTION
 
-We fail to reject the null that marijuana did not increase crime. This is because the ratio of PostMSE/PreMSE is low and that implies that crime did not spike post treatment. Altogether this suggests that marijuana legalization does not increase crime.
+We fail to reject the null that marijuana did not increase crime with p values of `r co_pval` for Colorado and `r wa_pval` for Washington. This is because the ratio of PostMSE/PreMSE is low and that implies that crime did not spike post treatment. Altogether this suggests that marijuana legalization does not increase murder rates.
 
-```{R}
+```{r part d}
 p_load(purrr)
 
 output = map_dfr(unique(state_pop_murder_synthetic[, state_fips]), synthcontrol)
@@ -316,10 +320,10 @@ output %<>%
 output = data.table(output)
 
 # Colorado Empirical P Value
-output[state_fips_treated == 8, rnk]/(nrow(output)-1)
+co_pval = output[state_fips_treated == 8, rnk]/(nrow(output)-1)
 
 # Washington Empirical P Value
-output[state_fips_treated == 53, rnk]/(nrow(output)-1)
+wa_pval = output[state_fips_treated == 53, rnk]/(nrow(output)-1)
 ```
 
 
@@ -333,7 +337,7 @@ Estimate QTE’s for every percentile from the 1 percentile to the 99th percenti
 
 #### SOLUTION
 
-No, the QTE's do not allow you to recover the distribution of individual treatment effects; they return the average treatment effect over the distribution of outcomes. The individual treatment effects are not recoverable since we must know both Y0 and Y1.
+No, the QTE's do not allow you to recover the distribution of individual treatment effects; they return the average treatment effect over the distribution of outcomes. The individual treatment effects are not recoverable since we must know the joint distribution of Y1 and Y0. In the histogram, we are able to recover each individual's treatment effect and then find the 1st and 99th percentile of effects. However when we estimate the QTE, there is an adhoc assumption on the joint distribution of Y1 and Y0 to calculate the outcomes.
 
 ```{R}
 bltn = read.csv("data/Better_Late_Than_Never.csv")
