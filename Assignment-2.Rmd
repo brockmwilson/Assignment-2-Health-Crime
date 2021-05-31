@@ -148,8 +148,6 @@ Create a dummy variable that indicates whether recreational marijuana is availab
 
 #### SOLUTION
 
-The 95% confidence interval for the effect of recreational marijuana legalization on murder rate is (`r mj_coef_lb`,`r mj_coef_ub`). This indicates that legalization does not contribute to "reefer madness".
-
 
 ```{R}
 
@@ -179,13 +177,16 @@ mj_coef_lb = round(reg1$coefficients[1] - 1.96*reg1$se[1], digits = 3)
 ```
 
 
+The 95% confidence interval for the effect of recreational marijuana legalization on murder rate is (`r mj_coef_lb`,`r mj_coef_ub`). This indicates that legalization does not contribute to "reefer madness". If anything, the coefficient is negative suggesting that legalization of marijuana decreases violent crime.
+
+
 ### B. 
 
 Now I want you to collapse your data to 3 regions. Colorado, Washington, and the rest of the country. Create a connected line plot with murder on the y-axis and year on the x- axis. Create a vertical line marking 2014. What broadly happens to average murder rates in Colorado and Washington, the first legalizers? What happens in the rest of the country? Do the trends in the Colorado and Washington match those in the rest of the country?
 
 #### SOLUTION
 
-The average murder rate in Colorado and Washington increases significantly in 2014 (Washington less so than Colorado). The rest of the country also has a large increase in the average murder rate in 2014. The trends in Colorado and Washington seem to follow the average murder rate closely, the only exception is that Colorado had a large spike in murders in 2004.
+The average murder rate in Colorado and Washington increases significantly in 2014 (Washington less so than Colorado). The rest of the country also has a large increase in the average murder rate in 2014. The trends in Colorado and Washington seem to follow the average murder rate in the rest of the US closely, the only exception is that Colorado had a large spike in murders in 2004. This is reassuring because using the rest of the US for a synthetic control seems acceptable.
 
 ```{R}
 
@@ -219,12 +220,206 @@ Now use the state by year data again. Drop California, Oregon, Nevada, and Alask
 
 #### SOLUTION
 
-For Colorado, the synthetic version suggests that there is a larger increase in murder rates that Colorado avoided. For Washington, 
+For Colorado, the synthetic version had approximately the same murder rate as Colorado. This suggests legalization did little to the murder rate in Colorado. For Washington, the synthetic control suggests there was a spike in murders that Washington avoided. This suggests that Washington may have had a lower murder rate due to legalization.
 
-```{R, eval = FALSE}
+```{R, echo = FALSE}
+p_load(optimx, kernlab)
+
+quietsynth = function (data.prep.obj = NULL, X1 = NULL, X0 = NULL, Z0 = NULL, 
+    Z1 = NULL, custom.v = NULL, optimxmethod = c("Nelder-Mead", 
+        "BFGS"), genoud = FALSE, quadopt = "ipop", Margin.ipop = 5e-04, 
+    Sigf.ipop = 5, Bound.ipop = 10, verbose = FALSE, ...) 
+{
+    if (is.null(data.prep.obj) == FALSE) {
+        X1 <- data.prep.obj$X1
+        Z1 <- data.prep.obj$Z1
+        X0 <- data.prep.obj$X0
+        Z0 <- data.prep.obj$Z0
+    }
+    else {
+        cat("X1,X0,Z1,Z0 were individually input (not dataprep object.)\n\n")
+    }
+    store <- list(X1 = X1, X0 = X0, Z1 = Z1, Z0 = Z0)
+    for (i in 1:4) {
+        if (is.null(store[[i]])) {
+            stop(paste("\n", names(store)[i], "is missing \n"))
+        }
+        if (sum(is.na(store[[i]])) > 0) {
+            stop(paste("\n NAs in", names(store)[i], "\n"))
+        }
+        if (is.matrix(store[[i]]) == FALSE) {
+            stop(paste("\n", names(store)[i], "is not a matrix object\n"))
+        }
+    }
+    if (ncol(X1) != 1) {
+        stop("\n Please specify only one treated unit: X1 has to have ncol= 1")
+    }
+    if (ncol(Z1) != 1) {
+        stop("\n Please specify only one treated unit: Z1 has to have ncol= 1")
+    }
+    if (ncol(X0) < 2) {
+        stop("\n Please specify at least two control units: X0 has to have ncol >= 2 ")
+    }
+    if (ncol(Z0) < 2) {
+        stop("\n Please specify only one treated unit: Z0 has to have ncol >= 2")
+    }
+    if (nrow(Z0) != nrow(Z1)) {
+        stop("\n Different number of periods for treated and controls: nrow(Z0) unequal nrow(Z1)")
+    }
+    if (nrow(X0) != nrow(X1)) {
+        stop("\n Different number of predictors for treated and controls: nrow(X0) unequal nrow(X1)")
+    }
+    if (nrow(X0) == 0) {
+        stop("No predictors specified. Please specify at least on predictor")
+    }
+    if (nrow(Z0) == 0) {
+        stop("No periods specified for Z1 and Z0. Please specify at least on period")
+    }
+    if (0 %in% apply(X0, 1, sd)) {
+        stop("\n At least one predictor in X0 has no variation across control units. Please remove this predictor.")
+    }
+    nvarsV <- dim(X0)[1]
+    big.dataframe <- cbind(X0, X1)
+    divisor <- sqrt(apply(big.dataframe, 1, var))
+    scaled.matrix <- t(t(big.dataframe) %*% (1/(divisor) * diag(rep(dim(big.dataframe)[1], 
+        1))))
+    X0.scaled <- scaled.matrix[, c(1:(dim(X0)[2]))]
+    if (is.vector(X0.scaled) == TRUE) {
+        X0.scaled <- t(as.matrix(X0.scaled))
+    }
+    X1.scaled <- scaled.matrix[, dim(scaled.matrix)[2]]
+    if (is.null(custom.v) & nrow(X0) != 1) {
+        cat("\n****************", "\n searching for synthetic control unit  \n", 
+            "\n")
+        if (genoud == TRUE) {
+            require(rgenoud)
+            cat("\n****************", "\n genoud() requested for optimization\n", 
+                "\n")
+            rgV.genoud <- genoud(fn.V, nvarsV, X0.scaled = X0.scaled, 
+                X1.scaled = X1.scaled, Z0 = Z0, Z1 = Z1, quadopt = quadopt, 
+                margin.ipop = Margin.ipop, sigf.ipop = Sigf.ipop, 
+                bound.ipop = Bound.ipop)
+            SV1 <- rgV.genoud$par
+            cat("\n****************", "\n genoud() finished, now running local optimization using optim()\n", 
+                "\n")
+        }
+        else {
+            SV1 <- rep(1/nvarsV, nvarsV)
+        }
+        all.methods <- FALSE
+        if (sum(optimxmethod %in% c("All")) == 1) {
+            all.methods <- TRUE
+        }
+        rgV.optim.1 <- optimx(par = SV1, fn = fn.V, gr = NULL, 
+            hess = NULL, method = optimxmethod, itnmax = NULL, 
+            hessian = FALSE, control = list(kkt = FALSE, starttests = FALSE, 
+                dowarn = FALSE, all.methods = all.methods), X0.scaled = X0.scaled, 
+            X1.scaled = X1.scaled, Z0 = Z0, Z1 = Z1, quadopt = quadopt, 
+            margin.ipop = Margin.ipop, sigf.ipop = Sigf.ipop, 
+            bound.ipop = Bound.ipop)
+        if (verbose == TRUE) {
+            print(rgV.optim.1)
+        }
+        rgV.optim.1 <- collect.optimx(rgV.optim.1, "min")
+        Xall <- cbind(X1.scaled, X0.scaled)
+        Xall <- cbind(rep(1, ncol(Xall)), t(Xall))
+        Zall <- cbind(Z1, Z0)
+        Beta <- try(solve(t(Xall) %*% Xall) %*% t(Xall) %*% t(Zall), 
+            silent = TRUE)
+        if (inherits(Beta, "try-error")) {
+            rgV.optim <- rgV.optim.1
+        }
+        else {
+            Beta <- Beta[-1, ]
+            V <- Beta %*% t(Beta)
+            SV2 <- diag(V)
+            SV2 <- SV2/sum(SV2)
+            rgV.optim.2 <- optimx(par = SV2, fn = fn.V, gr = NULL, 
+                hess = NULL, method = optimxmethod, itnmax = NULL, 
+                hessian = FALSE, control = list(kkt = FALSE, 
+                  starttests = FALSE, dowarn = FALSE, all.methods = all.methods), 
+                X0.scaled = X0.scaled, X1.scaled = X1.scaled, 
+                Z0 = Z0, Z1 = Z1, quadopt = quadopt, margin.ipop = Margin.ipop, 
+                sigf.ipop = Sigf.ipop, bound.ipop = Bound.ipop)
+            if (verbose == TRUE) {
+                print(rgV.optim.2)
+            }
+            rgV.optim.2 <- collect.optimx(rgV.optim.2, "min")
+            if (verbose == TRUE) {
+                cat("\n Equal weight loss is:", rgV.optim.1$value, 
+                  "\n")
+                cat("\n Regression Loss is:", rgV.optim.2$value, 
+                  "\n")
+            }
+            if (rgV.optim.1$value < rgV.optim.2$value) {
+                rgV.optim <- rgV.optim.1
+            }
+            else {
+                rgV.optim <- rgV.optim.2
+            }
+        }
+        solution.v <- abs(rgV.optim$par)/sum(abs(rgV.optim$par))
+    }
+    else {
+      
+        if (nrow(X0) == 1) {
+            custom.v <- 1
+        }
+        else {
+            cat("\n****************", "\n v weights supplied manually: computing synthtic control unit \n", 
+                "\n\n")
+            if (length(custom.v) != nvarsV) {
+                stop("custom.V misspecified: length(custom.V) != nrow(X1)")
+            }
+            if (mode(custom.v) != "numeric") {
+                stop("custom.V must be numeric")
+            }
+        }
+        rgV.optim <- NULL
+        solution.v <- abs(custom.v)/sum(custom.v)
+    }
+    V <- diag(x = as.numeric(solution.v), nrow = nvarsV, ncol = nvarsV)
+    H <- t(X0.scaled) %*% V %*% (X0.scaled)
+    a <- X1.scaled
+    c <- -1 * c(t(a) %*% V %*% (X0.scaled))
+    A <- t(rep(1, length(c)))
+    b <- 1
+    l <- rep(0, length(c))
+    u <- rep(1, length(c))
+    r <- 0
+    if (quadopt == "ipop") {
+        res <- ipop(c = c, H = H, A = A, b = b, l = l, u = u, 
+            r = r, margin = Margin.ipop, maxiter = 1000, sigf = Sigf.ipop, 
+            bound = Bound.ipop)
+        solution.w <- as.matrix(primal(res))
+    }
+    else {
+        if (quadopt == "LowRankQP") {
+            res <- LowRankQP(Vmat = H, dvec = c, Amat = A, bvec = 1, 
+                uvec = rep(1, length(c)), method = "LU")
+            solution.w <- as.matrix(res$alpha)
+        }
+    }
+    rownames(solution.w) <- colnames(X0)
+    colnames(solution.w) <- "w.weight"
+    names(solution.v) <- rownames(X0)
+    loss.w <- t(X1.scaled - X0.scaled %*% solution.w) %*% V %*% 
+        (X1.scaled - X0.scaled %*% solution.w)
+    loss.v <- t(Z1 - Z0 %*% as.matrix(solution.w)) %*% (Z1 - 
+        Z0 %*% as.matrix(solution.w))
+    loss.v <- loss.v/nrow(Z0)
+    optimize.out <- list(solution.v = solution.v, solution.w = solution.w, 
+        loss.v = loss.v, loss.w = loss.w, custom.v = custom.v, 
+        rgV.optim = rgV.optim)
+    return(invisible(optimize.out))
+}
+```
+
+
+```{R}
 # Great paper on syn control: https://economics.mit.edu/files/17847
 # Using Synthetic Controls: Feasibility, Data Requirements, and Methodological Aspects
-p_load(Synth)
+p_load(Synth, purrr)
 
 # Dropping Cali, Oregon, Nevada, Alaska
 state_pop_murder_synthetic = state_pop_murder_final[!(state_fips %in% c(6, 41, 32, 2))]
@@ -243,7 +438,7 @@ state_pop_murder_synthetic =
   )
 
 
-synthcontrol = function(state_fips_treated, plot = FALSE){
+synthcontrol = function(state_fips_treated, plot = FALSE, dataframe = TRUE){
 
 
 # Dataprep 
@@ -265,15 +460,15 @@ dataprep = dataprep(
 # Now we have our data ready in the form of a list. We have all the matrices we need to run synth()
 # Our output from the synth() function will be a list that includes our optimal weight matrix W*
 
-synth_out_treated = dataprep %>% synth(verbose = FALSE)
+synth_out_treated = (dataprep %>% quietsynth(verbose = FALSE))
 
 # From here, we can plot the treatment variable and the synthetic control using Synth's plot function.
 # The variable tr.intake is an optional variable if you want a dashed vertical line where the intervention takes place.
 
 if(plot){
-  synth_out_treated %>% path.plot(dataprep.res = dataprep, tr.intake = 2014)
+  synth_out_treated %>% path.plot(dataprep.res = dataprep, tr.intake = 2014, Ylab = c("Average Murder Rate"), Main = as.character(state_pop_murder_synthetic[state_fips == state_fips_treated & year == 2002, state]))
 }
-  
+  path.plot
 # Finally, we can construct our synthetic control variable if we wanted to conduct difference-in-difference analysis on it to estimate the treatment effect.
 
 synth_control_treated = dataprep$Y0plot %*% synth_out_treated$solution.w
@@ -286,13 +481,14 @@ preerror = mean((as.vector(synth_control_treated[1:13]) - as.vector(state_pop_mu
 
 posterror = mean((as.vector(synth_control_treated[14:17]) - as.vector(state_pop_murder_synthetic[state_fips==state_fips_treated & year > 2013 & year < 2018, murder_pop]))^2)
 
-return(data.frame(state_fips_treated, preerror, posterror))
-
+if(dataframe){
+  return(data.frame(state_fips_treated, preerror, posterror))
+}
 }
 
-synthcontrol(8, TRUE)
+synthcontrol(8, TRUE, FALSE) # Colorado
 
-synthcontrol(53, TRUE)
+synthcontrol(53, TRUE, FALSE) # Washington
 
 ```
 
@@ -301,8 +497,6 @@ synthcontrol(53, TRUE)
 Use randomization inference to conduct hypothesis testing. To do so, reestimate the synthetic control approach for each state not treated excluding the two treatment states (and the other later adopting states). Estimate the mean squared error (MSE) for the placebo states, and for the treated states, both before and after recreational marijuana legalization. Now generate a ratio of postMSE/preMSE. How does CO and Washington compare to the distribution. This is your empirical p-value. Can you reject the $H_0$ that marijuana legalization did not increase crime? Why or why not?
 
 #### SOLUTION
-
-We fail to reject the null that marijuana did not increase crime with p values of `r co_pval` for Colorado and `r wa_pval` for Washington. This is because the ratio of PostMSE/PreMSE is low and that implies that crime did not spike post treatment. Altogether this suggests that marijuana legalization does not increase murder rates.
 
 ```{r part d}
 p_load(purrr)
@@ -326,6 +520,7 @@ co_pval = output[state_fips_treated == 8, rnk]/(nrow(output)-1)
 wa_pval = output[state_fips_treated == 53, rnk]/(nrow(output)-1)
 ```
 
+We fail to reject the null that marijuana did not increase crime with p values of `r co_pval` for Colorado and `r wa_pval` for Washington. This is because the ratio of PostMSE/PreMSE is low and that implies that crime did not spike post treatment. Altogether this suggests that marijuana legalization does not change murder rates.
 
 ## 2. Quantile Regressions
 
