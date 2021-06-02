@@ -1,7 +1,7 @@
 ---
 title: "Assignment 2"
 subtitle: "EC 607: Health and Crime"
-author: "Brock Wilson, Emmett Saulnier, and Tanner Bivins"
+author: "Tanner Bivins, Emmett Saulnier, and Brock Wilson"
 date: "5/31/2021"
 output: html_document
 ---
